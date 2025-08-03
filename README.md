@@ -1,203 +1,480 @@
-# InventoryApp - Sistema de Gestión de Productos e Inventarios
+# Inventory Management API
 
-Este proyecto es una aplicación de microservicios desarrollada con Spring Boot para la gestión de productos e inventarios. Está estructurado como un proyecto Maven multi-módulo que contiene dos microservicios independientes.
+Esta API de gestión de inventarios está desarrollada con Spring Boot y contiene dos microservicios independientes: uno para la gestión de productos y otro para la gestión de inventarios.
 
-## 📋 Descripción General
+## Estructura del Proyecto
 
-La aplicación está compuesta por dos microservicios principales:
-- **Product Service**: Gestión de productos
-- **Inventory Service**: Gestión de inventarios
+El proyecto utiliza Maven como herramienta de construcción y está organizado como un proyecto multi-módulo que contiene:
 
-## 🏗️ Arquitectura del Proyecto
+- **Product Service** (Puerto 8080): Gestión de productos
+- **Inventory Service** (Puerto 8001): Gestión de inventarios
 
-```
-inventoryapp/
-├── productservice/          # Microservicio de gestión de productos
-├── inventoryservice/        # Microservicio de gestión de inventarios
-└── pom.xml                 # POM padre del proyecto multi-módulo
-```
+## Tecnologías Utilizadas
 
-## 🚀 Tecnologías Utilizadas
+- Java 24
+- Spring Boot 3.5.4
+- Spring Data JPA
+- H2 Database (Base de datos en memoria)
+- Maven (Multi-módulo)
+- Jakarta Validation
+- JUnit 5 & AssertJ (Testing)
 
-- **Java 24**
-- **Spring Boot 3.5.4**
-- **Spring Data JPA**
-- **Spring Web**
-- **Base de datos H2** (en memoria)
-- **Maven** para gestión de dependencias
+## Requisitos
 
-## 📦 Microservicios
-
-### 1. Product Service (Puerto 8080)
-
-Microservicio encargado de la gestión completa de productos.
-
-#### Endpoints Disponibles:
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| POST | `/api/products` | Crear un nuevo producto |
-| GET | `/api/products` | Obtener todos los productos |
-| GET | `/api/products/{id}` | Obtener un producto por ID |
-| PUT | `/api/products/{id}` | Actualizar un producto |
-| DELETE | `/api/products/{id}` | Eliminar un producto |
-
-#### Modelo de Datos - Product:
-```json
-{
-  "id": "Long (auto-generado)",
-  "name": "String",
-  "description": "String", 
-  "price": "BigDecimal",
-  "sku": "String",
-  "createdAt": "LocalDateTime",
-  "updatedAt": "LocalDateTime"
-}
-```
-
-#### DTOs:
-- **CreateProductDTO**: Para crear productos (name, description, price, sku)
-- **UpdateProductDTO**: Para actualizar productos (name, description, price, sku)
-
-### 2. Inventory Service (Puerto 8001)
-
-Microservicio encargado de la gestión de inventarios de productos.
-
-#### Endpoints Disponibles:
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| POST | `/api/inventory` | Crear registro de inventario para un producto |
-| GET | `/api/inventory` | Obtener todo el inventario |
-| GET | `/api/inventory/{id}` | Obtener inventario por ID de producto |
-| POST | `/api/inventory/increase/{id}` | Incrementar cantidad en inventario |
-| POST | `/api/inventory/decrease/{id}` | Decrementar cantidad en inventario |
-| DELETE | `/api/inventory/{id}` | Eliminar registro de inventario |
-
-#### Modelo de Datos - Inventory:
-```json
-{
-  "id": "Long (auto-generado)",
-  "productId": "Long",
-  "quantity": "int",
-  "lastUpdate": "LocalDateTime"
-}
-```
-
-#### DTOs:
-- **CreateInventoryDTO**: Para crear inventario (productId, quantity)
-- **QuantityDTO**: Para operaciones de incremento/decremento (quantity)
-
-## 🚀 Cómo Ejecutar el Proyecto
-
-### Prerrequisitos
 - Java 24 o superior
-- Maven 3.6 o superior
+- Maven 3.6+ (opcional, se incluye wrapper)
 
-### Opción 1: Ejecutar desde la raíz del proyecto
+## Instalación y Ejecución
+
+#### Compilar el proyecto completo
 ```bash
-# Compilar todo el proyecto
-mvn clean compile
-
-# Ejecutar el Product Service
-cd productservice
-mvn spring-boot:run
-
-# En otra terminal, ejecutar el Inventory Service
-cd inventoryservice
-mvn spring-boot:run
+./mvnw clean compile
 ```
 
-### Opción 2: Ejecutar cada microservicio individualmente
+#### Ejecutar Product Service (Puerto 8080)
 ```bash
-# Product Service
-cd productservice
-mvn spring-boot:run
-
-# Inventory Service  
-cd inventoryservice
-mvn spring-boot:run
+./mvnw spring-boot:run -pl productservice
 ```
 
-## 📝 Ejemplos de Uso
-
-### Crear un Producto
+#### Ejecutar Inventory Service (Puerto 8001)
 ```bash
+./mvnw spring-boot:run -pl inventoryservice
+```
+
+### Opción 3: Ejecutar Tests
+
+```bash
+# Ejecutar tests de un servicio específico
+./mvnw test -pl productservice
+```
+
+## Testing
+
+El proyecto incluye pruebas completas de integración para ambos controladores:
+
+### ProductControllerTests
+- ✅ Creación exitosa de productos
+- ✅ Validación de datos de entrada
+- ✅ Obtener todos los productos
+- ✅ Obtener producto por ID
+- ✅ Actualización de productos
+- ✅ Eliminación de productos
+- ✅ Manejo de productos no encontrados
+
+Las pruebas utilizan `@SpringBootTest` con `TestRestTemplate` para probar los endpoints de forma integral.
+
+## Manejo de Excepciones
+
+Ambos microservicios incluyen un `GlobalExceptionHandler` que maneja automáticamente:
+
+- **Validaciones de entrada**: Errores 400 con mensajes descriptivos
+- **Recursos no encontrados**: Errores 404 personalizados
+- **Errores de formato**: Manejo especial para valores como precio con formato incorrecto
+- **Errores internos**: Respuestas consistentes para errores del servidor
+
+Los manejadores de excepciones se activan automáticamente mediante anotaciones de Spring Boot sin necesidad de configuración manual.
+
+## Product Service API
+
+Base URL: `http://localhost:8080/api/products`
+
+### Endpoints Disponibles
+
+#### 1. Crear Producto
+- **POST** `/api/products`
+- **Descripción**: Crea un nuevo producto
+- **Request Body**:
+```json
+{
+    "name": "Laptop Dell",
+    "description": "Laptop Dell Inspiron 15 con 8GB RAM",
+    "price": 899.99,
+    "sku": "DELL-INS-15-001"
+}
+```
+- **Response** (201 Created):
+```json
+{
+    "id": 1,
+    "name": "Laptop Dell",
+    "description": "Laptop Dell Inspiron 15 con 8GB RAM",
+    "price": 899.99,
+    "sku": "DELL-INS-15-001",
+    "createdAt": "2024-01-15T10:30:00",
+    "updatedAt": "2024-01-15T10:30:00"
+}
+```
+
+#### 2. Obtener Todos los Productos
+- **GET** `/api/products`
+- **Descripción**: Retorna la lista de todos los productos
+- **Response** (200 OK):
+```json
+[
+    {
+        "id": 1,
+        "name": "Laptop Dell",
+        "description": "Laptop Dell Inspiron 15 con 8GB RAM",
+        "price": 899.99,
+        "sku": "DELL-INS-15-001",
+        "createdAt": "2024-01-15T10:30:00",
+        "updatedAt": "2024-01-15T10:30:00"
+    }
+]
+```
+
+#### 3. Obtener Producto por ID
+- **GET** `/api/products/{id}`
+- **Descripción**: Retorna un producto específico por su ID
+- **Response** (200 OK):
+```json
+{
+    "id": 1,
+    "name": "Laptop Dell",
+    "description": "Laptop Dell Inspiron 15 con 8GB RAM",
+    "price": 899.99,
+    "sku": "DELL-INS-15-001",
+    "createdAt": "2024-01-15T10:30:00",
+    "updatedAt": "2024-01-15T10:30:00"
+}
+```
+
+#### 4. Actualizar Producto
+- **PUT** `/api/products/{id}`
+- **Descripción**: Actualiza un producto existente (campos opcionales)
+- **Request Body**:
+```json
+{
+    "name": "Laptop Dell Actualizada",
+    "description": "Laptop Dell Inspiron 15 con 16GB RAM",
+    "price": 999.99,
+    "sku": "DELL-INS-15-002"
+}
+```
+- **Response** (200 OK):
+```json
+{
+    "id": 1,
+    "name": "Laptop Dell Actualizada",
+    "description": "Laptop Dell Inspiron 15 con 16GB RAM",
+    "price": 999.99,
+    "sku": "DELL-INS-15-002",
+    "createdAt": "2024-01-15T10:30:00",
+    "updatedAt": "2024-01-15T11:45:00"
+}
+```
+
+#### 5. Eliminar Producto
+- **DELETE** `/api/products/{id}`
+- **Descripción**: Elimina un producto
+- **Response** (200 OK):
+```json
+{
+    "message": "Producto eliminado exitosamente",
+    "deleted": true,
+    "product": {
+        "id": 1,
+        "name": "Laptop Dell",
+        "description": "Laptop Dell Inspiron 15 con 8GB RAM",
+        "price": 899.99,
+        "sku": "DELL-INS-15-001",
+        "createdAt": "2024-01-15T10:30:00",
+        "updatedAt": "2024-01-15T10:30:00"
+    }
+}
+```
+
+### Validaciones del Product Service
+
+Para el endpoint de creación de productos, se validan los siguientes campos:
+- `name`: Requerido, no puede ser null, no puede estar vacío, mínimo 3 caracteres
+- `description`: Requerido, no puede ser null, no puede estar vacío, mínimo 3 caracteres
+- `price`: Requerido, no puede ser null y debe ser positivo
+- `sku`: Requerido, no puede ser null, no puede estar vacío, mínimo 3 caracteres
+
+**Ejemplos de errores de validación**:
+
+*Error por campos vacíos:*
+```json
+{
+    "timestamp": "2024-01-15T10:30:00",
+    "status": 400,
+    "error": "Validation Failed",
+    "message": "Los datos enviados no son válidos",
+    "errors": {
+        "name": "El nombre del producto es obligatorio",
+        "price": "El precio del producto es obligatorio"
+    }
+}
+```
+
+*Error por tamaño mínimo:*
+```json
+{
+    "timestamp": "2024-01-15T10:30:00",
+    "status": 400,
+    "error": "Validation Failed",
+    "message": "Los datos enviados no son válidos",
+    "errors": {
+        "name": "El nombre del producto debe tener al menos 3 caracteres",
+        "sku": "El SKU del producto debe tener al menos 3 caracteres"
+    }
+}
+```
+
+*Error por precio inválido:*
+```json
+{
+    "timestamp": "2024-01-15T10:30:00",
+    "status": 400,
+    "error": "Validation Failed",
+    "message": "Los datos enviados no son válidos",
+    "errors": {
+        "price": "El precio del producto debe ser mayor a 0"
+    }
+}
+```
+
+*Error por formato de datos incorrecto (ej: precio con coma):*
+```json
+{
+    "timestamp": "2024-01-15T10:30:00",
+    "status": 400,
+    "error": "Bad Request",
+    "message": "El formato del precio no es válido. Use punto (.) como separador decimal (ejemplo: 19.99)",
+    "details": "Verifique el formato de los datos enviados"
+}
+```
+
+## Inventory Service API
+
+Base URL: `http://localhost:8001/api/inventory`
+
+### Endpoints Disponibles
+
+#### 1. Crear Inventario
+- **POST** `/api/inventory`
+- **Descripción**: Crea un nuevo registro de inventario para un producto
+- **Request Body**:
+```json
+{
+    "productId": 1,
+    "quantity": 50
+}
+```
+- **Response** (201 Created):
+```json
+{
+    "id": 1,
+    "productId": 1,
+    "quantity": 50,
+    "lastUpdate": "2024-01-15T10:30:00"
+}
+```
+
+#### 2. Obtener Todo el Inventario
+- **GET** `/api/inventory`
+- **Descripción**: Retorna la lista de todos los registros de inventario
+- **Response** (200 OK):
+```json
+[
+    {
+        "id": 1,
+        "productId": 1,
+        "quantity": 50,
+        "lastUpdate": "2024-01-15T10:30:00"
+    }
+]
+```
+
+#### 3. Obtener Inventario por ID de Producto
+- **GET** `/api/inventory/{productId}`
+- **Descripción**: Retorna el inventario de un producto específico
+- **Response** (200 OK):
+```json
+{
+    "id": 1,
+    "productId": 1,
+    "quantity": 50,
+    "lastUpdate": "2024-01-15T10:30:00"
+}
+```
+
+#### 4. Incrementar Cantidad
+- **POST** `/api/inventory/increase/{productId}`
+- **Descripción**: Incrementa la cantidad en inventario de un producto
+- **Request Body**:
+```json
+{
+    "quantity": 10
+}
+```
+- **Response** (200 OK):
+```json
+{
+    "id": 1,
+    "productId": 1,
+    "quantity": 60,
+    "lastUpdate": "2024-01-15T11:00:00"
+}
+```
+
+#### 5. Decrementar Cantidad
+- **POST** `/api/inventory/decrease/{productId}`
+- **Descripción**: Decrementa la cantidad en inventario de un producto
+- **Request Body**:
+```json
+{
+    "quantity": 5
+}
+```
+- **Response** (200 OK):
+```json
+{
+    "id": 1,
+    "productId": 1,
+    "quantity": 55,
+    "lastUpdate": "2024-01-15T11:15:00"
+}
+```
+
+#### 6. Eliminar Inventario
+- **DELETE** `/api/inventory/{productId}`
+- **Descripción**: Elimina un registro de inventario
+- **Response** (204 No Content)
+
+### Validaciones del Inventory Service
+
+Para todos los endpoints que requieren request body, se aplican las siguientes validaciones:
+
+**CreateInventoryDTO**:
+- `productId`: Requerido, no puede ser null
+- `quantity`: Requerido, no puede ser null, debe ser mayor o igual a 0
+
+**QuantityDTO**:
+- `quantity`: Requerido, no puede ser null y debe ser positivo (mayor a 0)
+
+**Ejemplos de errores de validación**:
+
+*Error por cantidad negativa en incremento/decremento:*
+```json
+{
+    "timestamp": "2024-01-15T10:30:00",
+    "status": 400,
+    "error": "Validation Failed",
+    "message": "Los datos enviados no son válidos",
+    "errors": {
+        "quantity": "La cantidad debe ser un número positivo mayor a 0"
+    }
+}
+```
+
+*Error por campos obligatorios:*
+```json
+{
+    "timestamp": "2024-01-15T10:30:00",
+    "status": 400,
+    "error": "Validation Failed",
+    "message": "Los datos enviados no son válidos",
+    "errors": {
+        "productId": "El ID del producto es obligatorio",
+        "quantity": "La cantidad inicial es obligatoria"
+    }
+}
+```
+
+*Error por formato de datos incorrecto (ej: cantidad como texto):*
+```json
+{
+    "timestamp": "2024-01-15T10:30:00",
+    "status": 400,
+    "error": "Bad Request",
+    "message": "El formato de la cantidad no es válido. Debe ser un número entero (ejemplo: 10)",
+    "details": "Verifique el formato de los datos enviados"
+}
+```
+
+## Códigos de Estado HTTP
+
+- **200 OK**: Operación exitosa
+- **201 Created**: Recurso creado exitosamente
+- **204 No Content**: Recurso eliminado exitosamente
+- **400 Bad Request**: Error en los datos enviados o validación fallida
+- **404 Not Found**: Recurso no encontrado
+
+## Ejemplos de Uso con cURL
+
+### Product Service
+
+```bash
+# Crear producto
 curl -X POST http://localhost:8080/api/products \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Laptop Dell",
-    "description": "Laptop Dell XPS 13",
-    "price": 1299.99,
-    "sku": "DELL-XPS-13"
+    "description": "Laptop Dell Inspiron 15",
+    "price": 899.99,
+    "sku": "DELL-INS-15-001"
   }'
+
+# Ejemplo de error - nombre muy corto
+curl -X POST http://localhost:8080/api/products \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "PC",
+    "description": "PC",
+    "price": -100,
+    "sku": "PC"
+  }'
+
+# Obtener todos los productos
+curl -X GET http://localhost:8080/api/products
+
+# Obtener producto por ID
+curl -X GET http://localhost:8080/api/products/1
 ```
 
-### Obtener todos los Productos
-```bash
-curl http://localhost:8080/api/products
-```
+### Inventory Service
 
-### Crear Inventario para un Producto
 ```bash
+# Crear inventario
 curl -X POST http://localhost:8001/api/inventory \
   -H "Content-Type: application/json" \
   -d '{
     "productId": 1,
     "quantity": 50
   }'
-```
 
-### Incrementar Inventario
-```bash
+# Incrementar cantidad
 curl -X POST http://localhost:8001/api/inventory/increase/1 \
   -H "Content-Type: application/json" \
-  -d '{"quantity": 10}'
-```
+  -d '{
+    "quantity": 10
+  }'
 
-### Decrementar Inventario
-```bash
+# Ejemplo de error - cantidad negativa
+curl -X POST http://localhost:8001/api/inventory/increase/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "quantity": -5
+  }'
+
+# Decrementar cantidad
 curl -X POST http://localhost:8001/api/inventory/decrease/1 \
   -H "Content-Type: application/json" \
-  -d '{"quantity": 5}'
+  -d '{
+    "quantity": 5
+  }'
+
+# Obtener inventario
+curl -X GET http://localhost:8001/api/inventory/1
 ```
 
-## 🛢️ Base de Datos
+## Notas Adicionales
 
-Ambos microservicios utilizan base de datos H2 en memoria. Las bases de datos se crean automáticamente al iniciar cada servicio y se pierden al detenerlos.
-
-### Acceso a Consola H2:
-- **Product Service**: http://localhost:8080/h2-console
-- **Inventory Service**: http://localhost:8001/h2-console
-
-## 📁 Estructura del Código
-
-Cada microservicio sigue la arquitectura por capas estándar de Spring Boot:
-
-```
-src/main/java/com/vimofama/{service}/
-├── controller/     # Controladores REST
-├── dto/           # Data Transfer Objects
-├── model/         # Entidades JPA
-├── repository/    # Repositorios de datos
-└── service/       # Lógica de negocio
-```
-
-## 🔧 Configuración
-
-### Product Service
-- Puerto: 8080
-- Nombre: productservice
-
-### Inventory Service  
-- Puerto: 8001
-- Nombre: inventoryservice
-
-
-## 👥 Autor
-
-- **Vimofama** - Desarrollo inicial
-
----
-
-**Nota**: Este es un proyecto de demostración con base de datos en memoria. Para uso en producción, se recomienda configurar bases de datos persistentes y agregar medidas de seguridad adicionales.
+- Ambos microservicios utilizan H2 Database en memoria, por lo que los datos se pierden al reiniciar las aplicaciones
+- Los microservicios funcionan de forma independiente y pueden ejecutarse por separado
+- El proyecto incluye validaciones automáticas con mensajes personalizados en español
+- Todas las validaciones de strings requieren un mínimo de 3 caracteres
+- Los mensajes de error son descriptivos y facilitan la depuración
+- Asegúrate de que los puertos 8080 y 8001 estén disponibles antes de ejecutar los servicios

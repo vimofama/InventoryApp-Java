@@ -4,6 +4,7 @@ import com.vimofama.productservice.dto.CreateProductDTO;
 import com.vimofama.productservice.dto.UpdateProductDTO;
 import com.vimofama.productservice.model.Product;
 import com.vimofama.productservice.service.ProductService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -24,9 +25,9 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<Product> createProduct(@RequestBody CreateProductDTO createProductDTO, UriComponentsBuilder ubc) {
+    public ResponseEntity<Product> createProduct(@Valid @RequestBody CreateProductDTO createProductDTO, UriComponentsBuilder ubc) {
         var product = productService.create(createProductDTO);
-        URI url = ubc.path("/products/{id}").buildAndExpand(product.getId()).toUri();
+        URI url = ubc.path("/api/products/{id}").buildAndExpand(product.getId()).toUri();
         return ResponseEntity.created(url).body(product);
     }
 
